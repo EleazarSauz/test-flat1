@@ -7,18 +7,18 @@ import os
 from .models import PullRequest
 
 
-repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/repositories/'
+repo_dir_git = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/repositories/'
 
 def CloneRepo(id_repo):
     uri = 'http://github.com/' + id_repo
-    clone_repo = Repo.clone_from(uri, repo_dir + id_repo)
+    clone_repo = Repo.clone_from(uri, repo_dir_git + id_repo)
 
     clone_repo.create_head('base')
     clone_repo.create_head('compare')
 
 
 def CreateRepo(id_repo):
-    repo_dir = repo_dir+id_repo
+    repo_dir = repo_dir_git+id_repo
     new_repo = Repo.init(repo_dir)
     
     committer = Actor('GitPython', '')
@@ -45,7 +45,7 @@ def ParseListCommit(commits):
         
 
 def ReadRepo(id_repo):
-    repo = Repo(repo_dir+id_repo+'/.git')
+    repo = Repo(repo_dir_git+id_repo+'/.git')
  
     list_branch=[]
     repo_heads=repo.heads
@@ -67,7 +67,7 @@ def ReadRepo(id_repo):
 
 
 def CreateCommit(id_repo, message, actor, title, branch_type, is_merge):
-    repo_dir = repo_dir+id_repo
+    repo_dir = repo_dir_git+id_repo
     repo = Repo(repo_dir+'/.git')
     author = Actor(actor, '')
     committer = Actor('GitPython', '')
