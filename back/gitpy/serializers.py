@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Repo, PullRequest
-
+from .functions import CreateCommit
 
 class PullRequestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,8 +11,33 @@ class PullRequestSerializer(serializers.ModelSerializer):
             'author',
             'description',
             'status',
-            'repo'
+            'repo',
+            'branch'
         )
+    def to_internal_value(self, data):
+        data_repo = Repo.objects.get(pk=data.get('repo'))
+        is_merge=False
+        if data.get('status') == "M":
+            is_merge=True
+
+        CreateCommit(
+            data_repo.id_repo, 
+            data.get('description'), 
+            data.get('author'),
+            data.get('title'),
+            data.get('branch'),
+            is_merge
+        )
+        return {
+            'id': data.get('id'),
+            'title': data.get('title'),
+            'author': data.get('author'),
+            'description': data.get('description'),
+            'status': data.get('status'),
+            'repo': data_repo,
+            'branch': data.get('branch'),
+        }
+
 
 
 class RepoSerializer(serializers.ModelSerializer):
@@ -45,12 +70,12 @@ class RepoSerializer(serializers.ModelSerializer):
             in_github = False
 
         return {
-            "id": data.get('id'),
+            'id': data.get('id'),
             'id_repo': owner + '/' + name,
-            "name": data.get('name'),
-            "owner": data.get('owner'),
-            "description": data.get('description'),
-            "in_github": in_github,
+            'name': data.get('name'),
+            'owner': data.get('owner'),
+            'description': data.get('description'),
+            'in_github': in_github,
         }
 
 

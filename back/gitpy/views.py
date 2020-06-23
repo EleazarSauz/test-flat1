@@ -1,56 +1,28 @@
-from django.shortcuts import render
-from django.http import HttpResponse, Http404
 from rest_framework import generics, mixins
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import viewsets, authentication, permissions
 from rest_framework.decorators import api_view
-from rest_framework.parsers import JSONParser
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_204_NO_CONTENT
+    HTTP_500_INTERNAL_SERVER_ERROR
 )
 from git import Repo, refs
 import os
 from .functions import (
-    suma, 
     CloneRepo, 
     CreateRepo, 
-    ReadRepo, 
-    createBranch
+    ReadRepo,
+    CreateCommit
 )
 from .models import Repo as RepoModel, PullRequest
-from .serializers import RepoSerializer,RepoDetailSerializer, PullRequestSerializer
+from .serializers import RepoSerializer, RepoDetailSerializer, PullRequestSerializer
 
 
 # Create your views here.
-@api_view(['GET', 'POST'])
-def index(request):
-    """
-    refs.head.HEAD(repo, path='HEAD')
-    /bare-repo
-    /repositories/git1/.git
-    #Crear git en en directorio especificado 
-    bare_repo = Repo.init(os.path.join(rw_dir, '.git'), bare=True)
-    assert bare_repo.bare
-    """
-    if request.method == 'POST':
-        uri = request.data['url']
-        name_repo = request.data['name_repo']
-        print ('hi info :)', uri, name_repo)
-
-        return Response({"message": "Got some data!", "data": request.data})
-
-    return Response({"message": "Got some data!", "data": createBranch('EleazarSauz/testArduino')})
-
-
-
 class RepoViewSet(generics.ListCreateAPIView):
     """
-    colocar in_github en falso si ves esto en django rest framework
+    colocar 'in_github' en false si ves esto en django rest framework,
     solo es true si el frontend valido que existe el repo en github
     """
     queryset = RepoModel.objects.all().order_by('id')
@@ -58,7 +30,6 @@ class RepoViewSet(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         data=request.data
-        #data['id_repo']=request.data['owner']+'/'+request.data['name']
         serializer = RepoSerializer(data=request.data)
         if serializer.is_valid():
             try:
@@ -72,26 +43,16 @@ class RepoViewSet(generics.ListCreateAPIView):
                 return Response({"message": "Error al crear el repo"}, status=HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-
     def list(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
         print('request list... ', request)
         queryset = self.get_queryset()
         serializer = RepoSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
-class PullRequestViewSet(generics.ListCreateAPIView):
+class ListPullRequestView(generics.ListAPIView):
     queryset = PullRequest.objects.all()
     serializer_class = PullRequestSerializer
-    def post(self, request, pk, *args, **kwargs):
-        #data=request.data
-        #data['id_repo']=request.data['owner']+'/'+request.data['name']
-        serializer = PullRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=HTTP_201_CREATED)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk, format=None):
         snippets = PullRequest.objects.filter(repo=pk)
@@ -109,7 +70,33 @@ class RepoDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
 
 class RepoInfoGit(APIView):
     def get(self, request, pk, dk):
+        return Response(ReadRepo(pk+'/'+dk))
+       
+
+class NewPullRequest(generics.CreateAPIView):
+    serializer_class = PullRequestSerializer
+    def post(self, request, *args, **kwargs):
         try:
-            return Response(ReadRepo(pk+'/'+dk))
+            serializer = PullRequestSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                data=serializer.data
+                return Response(serializer.data, status=HTTP_201_CREATED)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
         except:
-            raise Http404
+            return Response({"message": "Hubo conflictos al realizar el merge"}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdatePullRequest(generics.UpdateAPIView):
+    serializer_class = PullRequestSerializer
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            pull_request = PullRequest.objects.get(pk=pk)
+        except PullRequest.DoesNotExist:
+            return Response({"message": "Error al editar pull request"}, status=HTTP_400_BAD_REQUEST)
+        serializer = PullRequestSerializer(pull_request, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            data=serializer.data
+            return Response(serializer.data, status=HTTP_201_CREATED)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)

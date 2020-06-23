@@ -15,8 +15,13 @@ class PullRequest(models.Model):
         ('C', 'Close'),
         ('M', 'Merged')
     )
+    BRANCH_OPTIONS=(
+        ('B', 'base'),
+        ('C', 'compare') 
+    )
     author = models.CharField('Author Repo', max_length=60)
     title = models.CharField('Title PR', max_length=80)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=1, choices=TYPE_STATUS)
     repo = models.ForeignKey('Repo', on_delete=models.CASCADE, related_name='getHorario')
+    branch = models.CharField(max_length=1, choices=BRANCH_OPTIONS, default='B')
