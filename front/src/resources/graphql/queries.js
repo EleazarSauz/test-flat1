@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
  
-export const GET_PRs = gql`
-  query GET_PRs($name: String!, $owner: String!) {
+export const GET_GITHUB_DATA = gql`
+  query GET_GITHUB_DATA($name: String!, $owner: String!) {
     repository(name: $name, owner: $owner) {
       createdAt
       description

@@ -125,6 +125,14 @@ body {
   z-index: 20;
 }
 
+.menu-sticky {
+  display: flex; 
+  justify-content: center;
+  z-index: 10;
+  position: sticky;
+  background-color: #282c34;
+}
+
 /* Fallback for Edge
 -------------------------------------------------- */
 @supports (-ms-ime-align: auto) {

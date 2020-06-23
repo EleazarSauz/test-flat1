@@ -1,83 +1,86 @@
 import React, {useState, useEffect} from 'react';
-import { useQuery } from '@apollo/react-hooks';
+import {useQuery} from '@apollo/react-hooks';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route
+} from "react-router-dom";
 
-import './App.css';
-import logo from './logo.svg'
+import {GET_GITHUB_DATA} from './resources/graphql/queries'
+import {getListRepoApi} from './resources/fuctions'
+import PullRequest from './screens/pullRequest'
+import ErrorMessage from './components/error'
+import Loading from './components/loading'
 import Menu from './components/menu'
-import Form from './components/form'
-import Branches from './components/branches'
-import ListRepo from './components/listRepo'
-import CreatePullRequest from './screens/createPullRequest'
-import {GET_PRs} from './resources/graphql/queries'
+import Info from './screens/info'
+import Repo from './screens/repo'
+import './App.css';
 
+const initRepo = {
+  id_repo: "FlatDigital/fullstack-interview-test",
+  name: "fullstack-interview-test", 
+  owner: "FlatDigital"
+}
 
 function App() {
-  const [listBranch, setListBranch] = useState(null)
-  const [idRepo, setIdRepo] = useState('FlatDigital/fullstack-interview-test')
-  const [formData, setFormData] = useState({ 
-    name: "fullstack-interview-test", 
-    owner: "FlatDigital" 
-})
+  const [dataGitApi, setDataGitApi] = useState(null)
+  const [dataGitHub, setDataGitHub] = useState({
+    id_repo: initRepo.id_repo,
+    in_github: true
+  })
+  const [formDataRepo, setFormDataRepo] = useState({
+    name: initRepo.name, 
+    owner: initRepo.owner
+  })
+  const [arrayRepo, setArrayRepo] = useState([])
 
   useEffect(() => {
-
+    getListRepoApi()
+      .then(data => {
+        setArrayRepo(data)
+      })
   },[])
 
-  const { loading, error, data } = useQuery(GET_PRs, { 
-    onCompleted: data => {
-      const {name, refs, owner, description} = data.repository
-      console.log('dataRepo',data.repository)
-      setListBranch(refs.nodes)
+  const { loading, error } = useQuery(GET_GITHUB_DATA, {
+    variables: {
+      name: initRepo.name,
+      owner: initRepo.owner
     },
-    variables: formData
+    onCompleted: data => {
+      setDataGitHub(data.repository)
+    }
   });
 
-  if (loading) return 'Loading...';
-  if (error) return `Error! ${error.message}`;
+  if (error) return <ErrorMessage/>;
+  
+  if (loading) return <Loading/>;
+    return (
+      <Router>
+         
+        <Menu dataGitApi={dataGitApi}/>
+  
+        <Switch>
+          <Route path="/pullRequest">
+            <PullRequest dataGitApi={dataGitApi} />
+          </Route>
 
-  return (
-    <>
-      <Menu idRepo={idRepo}/>
-      <div style={{paddingTop: '70px'}}>
-        <div className="text-center mb-4">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="h3 mb-3 font-weight-normal">GitFlat</h1>
-        </div>
+          <Route path="/infoGit">
+            <Info dataGitApi={dataGitApi} dataGitHub={dataGitHub}/>
+          </Route>
 
-        <ul className="nav nav-tabs" style={{display: 'flex', justifyContent: 'center'}}>
-          <li className="nav-item">
-            <a className="nav-link active" data-toggle="tab" href="#repo">Repo</a>
-          </li>
-          
-          <li className="nav-item">
-            <a className="nav-link" data-toggle="tab" href="#info">Info</a>
-          </li>
-
-          <li className="nav-item">
-            <a className="nav-link" data-toggle="tab" href="#pr">PR's</a>
-          </li>
-        </ul>
-
-        <div id="myTabContent" className="tab-content">
-          <div className="tab-pane fade active show" id="repo">
-            <Form setListBranch={setListBranch} formData={formData} setFormData={setFormData}
-            setIdRepo={setIdRepo}/>
-            <ListRepo/>
-          </div>
-          <div className="tab-pane fade" id="pr">
-            <CreatePullRequest dataRepo={{id: 8}}/>
-          </div>
-          <div className="tab-pane fade" id="info">
-            { listBranch && <Branches listBranch={listBranch}/> }
-          </div>
-        </div>
-      </div>
-
-     
-
-      <p className="mt-5 mb-3 text-muted text-center">© {new Date().getFullYear()}</p>
-    </>
-  );
-}
+          <Route path="/">
+              <Repo setArrayRepo={setArrayRepo} formDataRepo={formDataRepo} setFormDataRepo={setFormDataRepo} setDataGitApi={setDataGitApi} 
+                dataGitHub={dataGitHub} setDataGitHub={setDataGitHub} arrayRepo={arrayRepo} dataGitApi={dataGitApi}/>
+          </Route>
+        </Switch>
+  
+        <footer className="text-center p-3 mt-5">
+          made with &nbsp;
+          <i className="fa fa-2x fa-heart animate__animated animate__infinite animate__pulse " style={{color: "#ef4e5b"}}></i>
+          &nbsp; by: <a href="https://twitter.com/EleazarSauz" target="_blank" rel="noopener noreferrer">@EleazarSauz</a>
+        </footer>
+      </Router>
+    );
+  }
 
 export default App;
