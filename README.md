@@ -10,9 +10,9 @@ python3 -m venv venv
 
 source venv/bin/activate
 
-pip install -r requirements.tx
-
 cd back
+
+pip install -r requirements.txt
 
 python manage.py runserver
 ```

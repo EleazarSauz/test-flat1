@@ -1,4 +1,5 @@
-const URI = 'http://54.88.171.247/api/v1/'
+const path = '/api/v1/'
+const URI = 'http://127.0.0.1:8000' + path
 
 export const getListRepoApi = async () => {
     try {
