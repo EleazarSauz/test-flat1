@@ -145,6 +145,5 @@ front/yarn-error.log*
 front/yarn.lock
 
 #back
-back/repositories
 back/back/__pycache__
 back/.env
