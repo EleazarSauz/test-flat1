@@ -41,7 +41,6 @@ class PullRequestSerializer(serializers.ModelSerializer):
 
 
 class RepoSerializer(serializers.ModelSerializer):
-    print('model')
     class Meta:
         model = Repo
         fields = (
@@ -57,7 +56,6 @@ class RepoSerializer(serializers.ModelSerializer):
         name = data.get('name')
         owner = data.get('owner')
         in_github = data.get('in_github') 
-        print(name + owner)
         if not name:
             raise serializers.ValidationError({
                 'name': 'This field is required.'

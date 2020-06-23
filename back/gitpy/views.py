@@ -44,7 +44,6 @@ class RepoViewSet(generics.ListCreateAPIView):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     def list(self, request):
-        print('request list... ', request)
         queryset = self.get_queryset()
         serializer = RepoSerializer(queryset, many=True)
         return Response(serializer.data)
